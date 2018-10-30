@@ -64,6 +64,44 @@ we can use export to create a temporary variable
 
 ### Processes and thread
 `pstree`: see process structure 
+`cat /proc/cpuinfo`: detailed information about CPUop
 
+**Top**  
 
+|content|explaination|
+|---|---|
+|  Cpu(s) 1.0%us | user space processes CPU usage  |
+|  1.0% sy | kernal space CPU usage  |
+| % id  |  availiable CPU usage |
+| % wa | percentage of time waiting for input/output |
+| Mem total | total physical memory |
+| Mem used | used memory |
+| Mem buffer | kernal buffer |
+| Swap total | Swap total |
+| cached | cached total swap, memory content swapped to disk and later swapped back to memory, but that part of disk haven't been overwrite |   
+
+<br/>
+
+|column name| meaning |
+|---|---|
+|PR| (dynamic) priority, (0 - 139), 0 - 99 are reserved for real-time processes, 100-139 are for users|
+|NI| nice value(-20 - 19), smaller the higher priority, also refer to as static priority|
+|VIRT| virtual memory used|
+|RES|physical memory used|
+|SHR|shared memory|
+|S|state of the process|
+|TIME|amount of time the process is active|
+
+Interact with TOP
+
+|command|meaning|
+|---|---|
+|P|sort according to COU usage|
+|M|sort by resident memory|
+
+**ps**
+`ps aux, ps axjf` show all information
+`ps -afxo user, ppid, pid, pgid,command`: customized display
+
+`renice  -n pid`： change priority for a user program, 0-19
 
