@@ -1,4 +1,4 @@
-#Shell Basics
+#Linux Basics
 
 ### Env Variables
 create variable `tmp`:  
@@ -104,4 +104,129 @@ Interact with TOP
 `ps -afxo user, ppid, pid, pgid,command`: customized display
 
 `renice  -n pid`： change priority for a user program, 0-19
+
+##shell script
+command inside `` will has higher priority to be executed  
+
+**()**
+ code inside `()` will executed as child process, parent process is not able to access variables in side `()`
+  `()` can also be used to init array `arr=(1,2,3,4,5); echo ${arr[1]}`
+
+**variable**
+`readonly varname` will define a const
+`$0 $1...${10}` represent parameters pased in
+
+**operator**  
+
+number operator  
+
+|operator|meaning|
+|---|---|
+|-eq|euqal|
+|-ne| not equal|
+|-gt|greater than|
+|-lt|less than|
+|-ge|greater or equal|
+|-le|less or equal|
+|||
+
+example:
+
+	a=10
+	b=20
+
+	if [ $a -eq $b ]
+	then
+	   echo "$a -eq $b : a == b"
+	else
+	   echo "$a -eq $b: a != b"
+	fi
+	
+	if [[ $a -lt 100 && $b -gt 100 ]]
+	then
+	   echo "return true"
+	else
+	   echo "return false"
+	fi
+
+
+
+String Operator   
+
+|operator|meaning|
+|---|--|
+|=|equal|
+|!=|not equal|
+|-z|true if length is 0|
+|-n|true if length > 0|
+|str|true if not empty|
+
+file operator   
+
+|operator|meaning|
+|---|---|
+|-e|file exist|
+|-f|is a file, not directory or system file|
+|-s|file size is not 0|
+|-d|is a directory|
+|-b| is a device|
+|-p|is a pipe|
+|-r|has read permission or not|
+|-w|has write permission|
+|-x|is executable or not|
+|f1 -nt f2|f1 newer than f2|
+|f1 -ot f2|f1 older than f2|
+|f1 -ef f2|f1 and f2 is the same hard link|
+
+**for loop**
+	  
+	for var in item1 item2 ... itemN
+	do
+	    command1
+	    command2
+	    ...
+	    commandN
+	done
+	
+**while loop**
+
+	int=1
+	while(( $int<=5 ))
+	do
+	    echo $int
+	    let "int++"
+	done
+
+**case**  
+
+	echo 'Enter a number between 1 and 4:'
+	echo 'The number you entered is:'
+	read aNum
+	case $aNum in
+	    1)  echo 'You have chosen 1'
+	    ;;
+	    2)  echo 'You have chosen 2'
+	    ;;
+	    3)  echo 'You have chosen 3'
+	    ;;
+	    4)  echo 'You have chosen 4'
+	    ;;
+	    *)  echo 'You did not enter a number between 1 and 4'
+	    ;;
+	esac
+
+**function**  
+
+	#!/bin/bash
+	funWithParam(){
+	    echo "The first parameter is $1 !"
+	    echo "The second parameter is $2 !"
+	    echo "The tenth parameter is $10 !"
+	    echo "The tenth parameter is ${10} !"
+	    echo "The eleventh parameter is ${11} !"
+	    echo "The total number of parameters is $# !"
+	    echo "Outputs all parameters as a string $* !"
+	}
+	# call the function
+	funWithParam 1 2 3 4 5 6 7 8 9 34 73
 
