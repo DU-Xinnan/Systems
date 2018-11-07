@@ -1,4 +1,4 @@
-#Linux Basics
+# Linux Basics
 
 ### Env Variables
 create variable `tmp`:  
@@ -57,6 +57,7 @@ we can use export to create a temporary variable
 `tee: echo 'sth' | tee file`: print and redirect  
 
 **create file descriptor**  
+
 `exec 3>somefile`  
 `cd /dev/fd/; ls -Al` to check existing descriptor  
 `exec 3>&-`: close the descriptor
@@ -108,7 +109,8 @@ Interact with TOP
 ##shell script
 command inside `` will has higher priority to be executed  
 
-**()**
+**()**  
+
  code inside `()` will executed as child process, parent process is not able to access variables in side `()`
   `()` can also be used to init array `arr=(1,2,3,4,5); echo ${arr[1]}`
 
