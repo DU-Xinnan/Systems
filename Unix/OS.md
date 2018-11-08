@@ -68,3 +68,70 @@ example:
 	}
 	
 `volatile` make sure compiler doesn't make unnecessary optimization, `sig_atomic_t` implies all the bits of the variable will be read and write as an 'atomic' operation.	
+
+
+### Memory and Allocations
+
+**malloc**  
+it will return `NULL` when malloc fails, a program should check that before further operation.
+memory in heap will remain allocated until it is freed by the same pointer
+
+By calling `sbrk` we can increase the size of the heap
+
+if we write multi-threaded programs, we will need multiple stacks but only ever one heap. Typically, the heap is part of `Data Segmenrt` and are placed just above code and global variables.
+
+	void *top_of_heap = sbrk(0); // return where the current heap ends
+	malloc(16384);
+	void *top_of_heap2 = sbrk(0);
+	printf("The top of heap went from %p to %p \n", top_of_heap, top_of_heap2);
+
+output: `The top of heap went from 0x4000 to 0xa000`
+
+**calloc**
+similar  to malloc but it initialize the memory contents to 0, naive version of the implementation is:
+
+	void *calloc(size_t n, size_t size)
+	{
+		size_t total = n * size; // Does not check for overflow!
+		void *result = malloc(total);
+	
+		if (!result) return NULL;
+	
+		// If we're using new memory pages 
+		// just allocated from the system by calling sbrk
+		// then they will be zero so zero-ing out is unnecessary,
+
+		memset(result, 0, total);
+		return result; 
+	}
+
+The memeory returned by `sbrk` is initialized to 0, because if it doesn't do so, the current program could read information that previous program leaves and could be a security loop hole. But `malloc` doesn't initialize memory to 0 in order to have better performance
+
+**realloc**
+`realloc` could resize an existing memory allocation that was previously allocated on the heap.
+
+ a naive implementation:
+
+	void * realloc(void * ptr, size_t newsize) {
+	  // Simple implementation always reserves more memory
+	  // and has no error checking
+	  void *result = malloc(newsize); 
+	  size_t oldsize =  ... //(depends on allocator's internal data structure)
+	  if (ptr) memcpy(result, ptr, newsize < oldsize ? newsize : oldsize);
+	  free(ptr);
+	  return result;
+	}
+	
+**heap memory allocation strategy**  
+
+|strategy name|meaning|pros&cons|
+|---|---|---|
+|perfect-fit strategy| finds the smallest hole that is of sufficient size| it will not evaluate all possible placements and therefore be faster|
+|worst-fit strategy|finds the largest hole that is of sufficient size|targets the largest unallocated space, it is a poor choice if large allocations are required.|
+|first-fit strategy|finds the first available hole that is of sufficient size|usually used in practice, Hybrid approaches and many other alternatives exist|
+
+challenges:
+
+- Need to minimize fragmentation (i.e. maximize memory utilization)
+- Need high performance
+- Fiddly implementation (lots of pointer manipulation using linked lists and pointer arithmetic)
