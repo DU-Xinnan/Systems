@@ -1,7 +1,8 @@
 ## System Programming
-
 <br>
-###Processes
+
+### Processes  
+
 **find the exit value of the child**
 
 	int status;
@@ -19,7 +20,8 @@
 	}
 	
 
-### Signals
+### Signals  
+
 signals allows asynchronous signal transfer across processes  
 
 |Name|	Default Action|	Usual Use Case|
@@ -135,3 +137,48 @@ challenges:
 - Need to minimize fragmentation (i.e. maximize memory utilization)
 - Need high performance
 - Fiddly implementation (lots of pointer manipulation using linked lists and pointer arithmetic)
+
+### Memory Allocator
+
+We can tihink of the heap memory as a list of blocks with each block contains *size* information about the block
+if we have a pointer `p` that points to the start of the block, then the `next_block` will be at `((char *) p) + *(size_t *) p`,
+`char *` means the pointer is calculated in bytes, `size_t` ensures the memory at `p` is read as size value. 
+
+The header data needs some space, so if the program as for 80 bytes (malloc(80)) but the header need 8 bytes, we internal implementation would need 88 bytes, and return the address of p + 8 * sizeof(p)
+
+The simplist way we can do a search along all the blocks until we find one with enough size. When the block was found, we will create 2 entries in our implicit list. We can mark the lowest bit in the size as inuse.  
+
+	// Assumes p is a reasonable pointer type, e.g. 'size_t *'.
+	isallocated = (*p) & 1;
+	realsize = (*p) & ~1;  // mask out the lowest bit
+	 
+**memory alignment**  
+
+Many architectures expect multi-byte primitives to be aligned to some multiple of 2^n, if multi-byte primitives are not stored on a reasonable boundary (for example starting at an odd address) then the performance can be significantly impacted.
+
+The glibc `malloc` uses the heuristic that will guarantee us to be aligned. On GNU systems, the address is always a multiple of eight on most systems, and a multiple of 16 on 64-bit systems.
+
+To calculated how many 16-bytes units do we need:   
+
+	int s = (requested_bytes + tag_overhead_bytes + 15) / 16
+
+**free**
+we just need to mark it as unused  
+
+	*p = (*p) & ~1; // Clear lowest bit 
+	
+However, if the previous or next block are also unused, we need to coaleasce them into a single free block. In order to do that, we also store the block size at the end of the block.
+
+**performance**  
+
+Allocating memory is a worst-case linear time operation (search linked lists for a sufficiently large free block)
+
+**Explicit Free Lists allocators**  
+Better performance can be achieved by implementing an explicit doubly-linked list of free nodes. In that case, we can immediately traverse to the next free block and the previous free block. And we could stored the next and previous avaliable block in the block. if the links are maintained from largest to smallest, then this produces a 'Worst-Fit' placement strategy.
+
+**Segragated Allocator**  
+A segregated allocator is one that divides the heap into different areas that are handled by different sub-allocators dependent on the size of the allocation request. Sizes are grouped into classes (e.g. powers of two) and each size is handled by a different sub-allocator and each size maintains its own free list.
+
+If there are no free blocks of size 2^n, go to the next level and steal that block and split it into two. If two neighboring blocks of the same size become unallocated, they can be coalesced back together into a single large block of twice the size
+
+The main disadvantage of the Buddy allocator is that they suffer from internal fragmentation, because allocations are rounded up to the nearest block size. For example, a 68-byte allocation will require a 128-byte block.
