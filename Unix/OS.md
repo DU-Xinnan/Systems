@@ -143,8 +143,7 @@ challenges:
 We can tihink of the heap memory as a list of blocks with each block contains *size* information about the block
 if we have a pointer `p` that points to the start of the block, then the `next_block` will be at `((char *) p) + *(size_t *) p`,
 `char *` means the pointer is calculated in bytes, `size_t` ensures the memory at `p` is read as size value. 
-
-The header data needs some space, so if the program as for 80 bytes (malloc(80)) but the header need 8 bytes, we internal implementation would need 88 bytes, and return the address of p + 8 * sizeof(p)
+a
 
 The simplist way we can do a search along all the blocks until we find one with enough size. When the block was found, we will create 2 entries in our implicit list. We can mark the lowest bit in the size as inuse.  
 
@@ -182,3 +181,103 @@ A segregated allocator is one that divides the heap into different areas that ar
 If there are no free blocks of size 2^n, go to the next level and steal that block and split it into two. If two neighboring blocks of the same size become unallocated, they can be coalesced back together into a single large block of twice the size
 
 The main disadvantage of the Buddy allocator is that they suffer from internal fragmentation, because allocations are rounded up to the nearest block size. For example, a 68-byte allocation will require a 128-byte block.
+
+
+### Thread (Lightweight Process)
+
+Similar to process except there is no copying. What this allows is for a process to share the same address space, variables, heap, file descriptors and etc. `clone` is used instead of `fork`. 
+
+**pthread**  
+  include `pthread.h` AND you need to compile with -pthread (or -lpthread) compiler option.  
+  to create a thread:  
+  
+  	int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg);
+  
+  The argument void *(*start_routine) (void *) means a pointer that takes a void * pointer and returns a void * pointer.
+  
+  Simple example:  
+  
+	#include <stdio.h>
+	#include <pthread.h>
+	// remember to set compilation option -pthread
+
+	void *busy(void *ptr) {
+	// ptr will point to "Hi"
+	    puts("Hello World");
+	    return NULL;
+	}
+	int main() {
+	    pthread_t id;
+	    pthread_create(&id, NULL, busy, "Hi");
+	    void *result;
+	    pthread_join(id, &result); // result will be bull because *busy returns null
+	}
+  
+  
+  **exit()** and **pthread_exit**  pthread_exit
+  
+  `exit()` will exit the whole process, it's the same as return in main method.  
+  `pthread_exit` only exit a process. Calling pthread_exit in the the main thread is a common way for simple programs to ensure that all threads finish.
+  
+  Example:
+  
+	int main() {
+	  pthread_t tid1, tid2;
+	  pthread_create(&tid1, NULL, myfunc, "Jabberwocky");
+	  pthread_create(&tid2, NULL, myfunc, "Vorpel");
+	  exit(42); //or return 42;
+	  // the two thread probably wont have time to be started
+	  // No code is run after exit
+	}
+
+	int main() {
+	  pthread_t tid1, tid2;
+	  pthread_create(&tid1, NULL, myfunc, "Jabberwocky");
+	  pthread_create(&tid2, NULL, myfunc, "Vorpel");
+	  pthread_exit(NULL); 
+
+	  // No code is run after pthread_exit
+	  // However process will continue to exist until both threads have finished
+	}
+	
+	// we can also join the thread to wait until it returns
+	int main() {
+	  pthread_t tid1, tid2;
+	  pthread_create(&tid1, NULL, myfunc, "Jabberwocky");
+	  pthread_create(&tid2, NULL, myfunc, "Vorpel");
+	  // wait for both threads to finish :
+	  void* result;
+	  pthread_join(tid1, &result);
+	  pthread_join(tid2, &result); 
+	  return 42;
+	}
+	
+**Race condition**  
+ run prints out 1 7 8 8 8 8 8 8 8 10
+ 
+	#include <pthread.h>
+	void* myfunc(void* ptr) {
+	    int i = *((int *) ptr);
+	    printf("%d ", i);
+	    return NULL;
+	}
+
+	int main() {
+	    // Each thread gets a different value of i to process
+	    int i;
+	    pthread_t tid;
+	    for(i =0; i < 10; i++) {
+		pthread_create(&tid, NULL, myfunc, &i); // ERROR
+	    }
+	    pthread_exit(NULL);
+	}
+
+to overcome this, we can create a struct and give them their own data area  
+
+	struct T {
+	  pthread_t id;
+	  int start;
+	  char result[100];
+	};
+	struct T *info = calloc(10 , sizeof(struct T)); // reserve enough bytes for ten T structures
+	pthread_create(&info[i].id, NULL, func, &info[i]);
