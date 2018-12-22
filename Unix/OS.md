@@ -281,3 +281,30 @@ to overcome this, we can create a struct and give them their own data area
 	};
 	struct T *info = calloc(10 , sizeof(struct T)); // reserve enough bytes for ten T structures
 	pthread_create(&info[i].id, NULL, func, &info[i]);
+
+
+
+
+### Synchronization  
+
+To avoid race conditions, we can use `mutex` to lock variables
+
+	pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER; // global variable
+	pthread_mutex_lock(&m);   // start of Critical Section
+	pthread_mutex_unlock(&m); // end of Critical Section
+	pthread_mutex_destroy(&m) // destroy the mutex
+
+the lock and unlock can only be done in the same thread  
+don't forget to unlock, otherwise deadlock might happen  
+
+Another option is using `semaphore`  
+
+	sem_t s;
+	sem_init(&s, 0, 1);
+
+	sem_wait(&s); // wait if the count is zero. If the count is non-zero the semaphore decrements the count and immediately returns
+	// Critical Section
+	sem_post(&s); // Post increments the semaphore and immediately returns.
+
+
+
